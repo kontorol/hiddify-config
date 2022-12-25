@@ -19,6 +19,8 @@ http {
   default_type application/octet-stream;
   gzip on;
 
+  log_format proxy '[$time_local] $proxy_protocol_addr '
+                 '$upstream_addr $status $bytes_sent $request_length $request_time';
   server {
     listen 443 ssl;
         
