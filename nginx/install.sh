@@ -3,9 +3,9 @@ systemctl stop nginx
 pkill -9 nginx
 mkdir -p ../log
 
-rm /etc/nginx/sites-available/default
-rm /etc/nginx/sites-enabled/default
-rm /etc/nginx/nginx.conf
+mv /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
+mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
 
 ln -s $(pwd)/nginx.conf /etc/nginx/nginx.conf
 
