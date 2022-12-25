@@ -20,7 +20,7 @@ proxies:
     # servername: example.com # priority over wss host
     network: ws
     ws-opts:
-      path: /usersecret/vmess/
+      path: /downloader/10001
     #   headers:
     #     Host: v2ray.com
     #   max-early-data: 2048
