@@ -1,32 +1,32 @@
-if ($request_uri ~ "^/(?<uid>(?<guid1>[a-zA-Z0-9]{8})(?<guid2>[a-zA-Z0-9]{4})(?<guid3>[a-zA-Z0-9]{4})(?<guid4>[a-zA-Z0-9]{4})(?<guid5>[a-zA-Z0-9]{12}))(/(?<requrl>.*))?$") {
-  set $guid "$guid1-$guid2-$guid3-$guid4-$guid5";
-  set $uuid $uid;
+if ($request_uri ~ "^/(?<gui>(?<guid1>[a-zA-Z0-9]{8})(-)(?<guid2>[a-zA-Z0-9]{4})(-)(?<guid3>[a-zA-Z0-9]{4})(-)(?<guid4>[a-zA-Z0-9]{4})(-)(?<guid5>[a-zA-Z0-9]{12}))(/(?<requrl>.*))?$") {
+  set $guid $gui;
+  set $uuid "$guid1$guid2$guid3$guid4$guid5";
   set $req $requrl;
 }
 
-if ($request_uri ~ "^/[a-zA-Z0-9]{32}/redirect/(.*)(%3A%2F%2F|://)(.*)$") {
-  return 307 $1://$3;
+if ($request_uri ~ "^/(([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))/redirect/(?<pre>.*)(%3A%2F%2F|://)(?<post>.*)$") {
+  return 307 $pre://$post;
 }
 
 location / {
 
-location ~ "^(/[a-zA-Z0-9]{32})?/ghr/(.*)$" {
+location ~ "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/ghr/(?<requrl>.*)$" {
   #for proxy github raw
-  rewrite "^(/[a-zA-Z0-9]{32})?/ghr/(.*)$" /$2 break;
+  rewrite "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/ghr/(?<requrl>.*)$" /$requrl break;
   proxy_set_header Host raw.githubusercontent.com;
   proxy_pass https://raw.githubusercontent.com:443;
 }
 
-location ~ "^(/[a-zA-Z0-9]{32})?/gho/(.*)$" {
+location ~ "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/gho/(?<requrl>.*)$" {
   #for proxy github object
-  rewrite "^(/[a-zA-Z0-9]{32})?/gho/(.*)$" /$2 break;
+  rewrite "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/gho/(?<requrl>.*)$" /$requrl break;
   proxy_set_header Host objects.githubusercontent.com;
   proxy_pass https://objects.githubusercontent.com:443;
 }
 
-location ~ "^(/[a-zA-Z0-9]{32})?/gh/(.*)$" {
+location ~ "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/gh/(?<requrl>.*)$" {
   #for proxy github
-  rewrite "^(/[a-zA-Z0-9]{32})?/gh/(.*)$" /$2 break;
+  rewrite "(^/([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))?/gh/(?<requrl>.*)$" /$requrl break;
   proxy_set_header Host github.com;
   proxy_pass https://github.com:443;
   proxy_redirect https://raw.githubusercontent.com/ https://$host/ghr/;
@@ -39,23 +39,23 @@ location ~ "^(/[a-zA-Z0-9]{32})?/gh/(.*)$" {
   sub_filter    src="/ src="/gh/;
 }
 
-  location ~ "^/([a-zA-Z0-9]{32})(/clash/)(.*)?$" {
+  location ~ "^/(([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))(/clash/)(?<requrl>.*)?$" {
     #for clash configs
-    alias /opt/hiddify-config/clash/$3;
+    alias /opt/hiddify-config/clash/$requrl;
     types { }   default_type "text/plain";
     sub_filter    usersecret $uuid;
-    sub_filter    userguidsecret "$guid1-$guid2-$guid3-$guid4-$guid5";
+    sub_filter    userguidsecret $guid;
     sub_filter_types text/plain;
     include /opt/hiddify-config/nginx/replace.conf;
     sub_filter_once off;
   }
 
-	location ~ "^/([a-zA-Z0-9]{32})(/.*)?$"{
+	location ~ "^/(([a-zA-Z0-9]{8})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{4})(-)([a-zA-Z0-9]{12}))(?<requrl>/.*)?$"{
 		#for help
-    alias /opt/hiddify-config/web/$2;
+    alias /opt/hiddify-config/web/$requrl;
     sub_filter_types text/plain text/html;
     sub_filter    usersecret $uuid;
-    sub_filter    userguidsecret "$guid1-$guid2-$guid3-$guid4-$guid5";
+    sub_filter    userguidsecret $guid;
     include /opt/hiddify-config/nginx/replace.conf;
     sub_filter_once off;
 	}
@@ -104,15 +104,16 @@ location /dns/ {
 
 #location /admin {
 
- # location  /admin/stats {
- #   proxy_pass http://localhost:440; 
- # }
+#  location  /admin/stats {
+#    proxy_pass http://localhost:440; 
+#  }
   
- # location  /admin/xui {
- #   proxy_redirect off;
- #   proxy_pass http://127.0.0.1:9999;  #xui监听端口
- #   proxy_http_version 1.1;
- #   proxy_set_header Host $host;
-  }
- # return 302 ../;
-}
+#  location  /admin/xui {
+#    proxy_redirect off;
+#    proxy_pass http://127.0.0.1:9999;  #xui监听端口
+#    proxy_http_version 1.1;
+#    proxy_set_header Host $host;
+#  }
+#  return 302 ../;
+#}
+
