@@ -10,33 +10,62 @@ if ($request_uri ~ "^/[a-zA-Z0-9]{32}/redirect/(.*)(%3A%2F%2F|://)(.*)$") {
 
 location / {
 
+location ~ "^(/[a-zA-Z0-9]{32})?/ghr/(.*)$" {
+  #for proxy github raw
+  rewrite "^(/[a-zA-Z0-9]{32})?/ghr/(.*)$" /$2 break;
+  proxy_set_header Host raw.githubusercontent.com;
+  proxy_pass https://raw.githubusercontent.com:443;
+}
+
+location ~ "^(/[a-zA-Z0-9]{32})?/gho/(.*)$" {
+  #for proxy github object
+  rewrite "^(/[a-zA-Z0-9]{32})?/gho/(.*)$" /$2 break;
+  proxy_set_header Host objects.githubusercontent.com;
+  proxy_pass https://objects.githubusercontent.com:443;
+}
+
+location ~ "^(/[a-zA-Z0-9]{32})?/gh/(.*)$" {
+  #for proxy github
+  rewrite "^(/[a-zA-Z0-9]{32})?/gh/(.*)$" /$2 break;
+  proxy_set_header Host github.com;
+  proxy_pass https://github.com:443;
+  proxy_redirect https://raw.githubusercontent.com/ https://$host/ghr/;
+  proxy_redirect https://objects.githubusercontent.com/ https://$host/gho/;
+
+  proxy_set_header Accept-Encoding "";
+  sub_filter_once off;
+  sub_filter    https://github.com/ /gh/;
+  sub_filter    href="/ href="/gh/;
+  sub_filter    src="/ src="/gh/;
+}
+
   location ~ "^/([a-zA-Z0-9]{32})(/clash/)(.*)?$" {
     #for clash configs
-    alias /opt/GITHUB_REPOSITORY/clash/$3;
+    alias /opt/hiddify-config/clash/$3;
     types { }   default_type "text/plain";
     sub_filter    usersecret $uuid;
     sub_filter    userguidsecret "$guid1-$guid2-$guid3-$guid4-$guid5";
     sub_filter_types text/plain;
-    include /opt/GITHUB_REPOSITORY/nginx/replace.conf;
+    include /opt/hiddify-config/nginx/replace.conf;
     sub_filter_once off;
   }
 
 	location ~ "^/([a-zA-Z0-9]{32})(/.*)?$"{
 		#for help
-    alias /opt/GITHUB_REPOSITORY/web/$2;
+    alias /opt/hiddify-config/web/$2;
     sub_filter_types text/plain text/html;
     sub_filter    usersecret $uuid;
     sub_filter    userguidsecret "$guid1-$guid2-$guid3-$guid4-$guid5";
-    include /opt/GITHUB_REPOSITORY/nginx/replace.conf;
+    include /opt/hiddify-config/nginx/replace.conf;
     sub_filter_once off;
 	}
 
-  proxy_pass https://telegramtlsdomain; #伪装网址
+  proxy_pass https://mail.google.com; #伪装网址
   proxy_redirect off;
   proxy_ssl_server_name on;
   sub_filter_once off;
-  sub_filter "telegramtlsdomain" $server_name;#伪装网址
-  proxy_set_header Host "telegramtlsdomain";#伪装网址
+  sub_filter "mail.google.com" $server_name;#伪装网址
+  proxy_set_header Host "mail.google.com";#伪装网址
   proxy_set_header Referer $http_referer;
   proxy_set_header X-Real-IP $remote_addr;
   proxy_set_header User-Agent $http_user_agent;
@@ -49,7 +78,7 @@ location / {
 
 location /downloader {
   if ($http_upgrade != "websocket") {
-    return 404;
+    return 302 ../;
   }
 
   location ~ "/downloader/\d{2,5}$" {
@@ -65,51 +94,25 @@ location /downloader {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   }
-  return 404;
+  return 302 ../;
 }
 
 location /dns/ {
-  # use it in your browser as https://defaultserverhost/defaultusersecret/dns/dns-query{?dns}
+  # use it in your browser as https://sm.connectedu.tk/F5DB2F026908F61E3041C57A87B3932A/dns/dns-query{?dns}
   proxy_pass https://dns.google:443/; 
 }
 
 location /admin {
 
-  location =  /admin/stats/ {
-    proxy_pass http://localhost:440/; 
+  location  /admin/stats {
+    proxy_pass http://localhost:440; 
   }
   
-  location =  /admin/xui/ {
+  location  /xui {
     proxy_redirect off;
     proxy_pass http://127.0.0.1:9999;  #xui监听端口
     proxy_http_version 1.1;
     proxy_set_header Host $host;
   }
-  return 404;
-}
-
-location /ghr/ {
-  #for proxy github raw
-  proxy_set_header Host raw.githubusercontent.com;
-  proxy_pass https://raw.githubusercontent.com:443/;
-}
-
-location /gho/ {
-  #for proxy github object
-  proxy_set_header Host objects.githubusercontent.com;
-  proxy_pass https://objects.githubusercontent.com:443/;
-}
-
-location /gh/ {
-  #for proxy github
-  proxy_set_header Host github.com;
-  proxy_pass https://github.com:443/;
-  proxy_redirect https://raw.githubusercontent.com/ https://$host/ghr/;
-  proxy_redirect https://objects.githubusercontent.com/ https://$host/gho/;
-
-  proxy_set_header Accept-Encoding "";
-  sub_filter_once off;
-  sub_filter    https://github.com/ /gh/;
-  sub_filter    href="/ href="/gh/;
-  sub_filter    src="/ src="/gh/;
+  return 302 ../;
 }
