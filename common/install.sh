@@ -2,7 +2,6 @@ sudo timedatectl set-timezone  Asia/Tehran
 
 apt install -y apt-transport-https dnsutils ca-certificates git curl wget gnupg-agent software-properties-common  iptables
 
-ln -s $(pwd)/sysctl.conf /etc/sysctl.d/ss-opt.conf
 sysctl --system
 
 if [[ $ONLY_IPV4 == true ]];then
@@ -11,7 +10,9 @@ if [[ $ONLY_IPV4 == true ]];then
   sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 fi
 
-bash google-bbr.sh
+if [[ $ENABLE_BBR == true ]]; then
+  bash google-bbr.sh
+fi
 
 function add2iptables(){
   iptables -C $1 || echo "adding rule $1" && iptables -I $1
