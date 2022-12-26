@@ -3,8 +3,8 @@ allow-lan: false
 log-level: info
 secret: ""
 external-controller: 127.0.0.1:9090
-ipv6: false
-mode: global
+ipv6: true
+mode: rule
 proxies:
 
   - name: "vmess"
@@ -13,8 +13,8 @@ proxies:
     port: 443
     uuid: userguidsecret
     alterId: 0
-    cipher: "chacha20-poly1305"
-    # udp: true
+    cipher: "auto"
+    udp: true
     tls: true
     # skip-cert-verify: true
     # servername: example.com # priority over wss host
